@@ -29,6 +29,7 @@ describe('queue', function() {
     queue.process('testJob', function (job, done) {
       should.equal(job.state, 'active');
       console.log('in processing...');
+      should.equal(job.data.dataField1, 1);
       async.series([
         function (done) {
           setTimeout(done, 200);
@@ -60,7 +61,7 @@ describe('queue', function() {
     var progressSpy = sinon.spy();
 
     this.timeout(5000);
-    var job = queue.create('testJob', {});
+    var job = queue.create('testJob', {dataField1: 1});
     job.on('complete', function (data) {
       should.exist(data.id);
       should.equal(data.state, 'complete');
@@ -70,7 +71,7 @@ describe('queue', function() {
       done();
     });
 
-    job.save(function (err) {
+    job.save(function (err) {console.log(err);
       should.not.exist(err);
       should.exist(job.id);
       queue.get(job.id, function (err, job) {
