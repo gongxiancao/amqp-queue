@@ -29,13 +29,12 @@ describe('queue', function() {
     });
     this.timeout(5000);
     var job = queue.create('testJob', {});
+    job.on('complete', function (data) {
+      should.exist(data.id);
+      done();
+    });
 
     job.save(function (err) {
-      job.on('complete', function (data) {
-        should.exist(data.id);
-        done();
-      });
-
       should.not.exist(err);
       should.exist(job.id);
       queue.get(job.id, function (err, job) {
