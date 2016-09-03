@@ -74,6 +74,15 @@ describe('queue', function() {
     job.save(function (err) {console.log(err);
       should.not.exist(err);
       should.exist(job.id);
+
+      queue.find({id: job.id}, {}, function (err, jobs) {
+        should.not.exist(err);
+        should.equal(jobs.length, 1);
+      });
+      queue.count({id: job.id}, function (err, count) {
+        should.not.exist(err);
+        should.equal(count, 1);
+      });
       queue.get(job.id, function (err, job) {
         job.on('progress', progressSpy);
       });
