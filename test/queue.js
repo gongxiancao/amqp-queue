@@ -35,25 +35,25 @@ describe('queue', function() {
           setTimeout(done, 200);
         },
         function (done) {
-          job.progress(0.2, 'step 1...', done);
+          job.progress(2, 10, 'step 1...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
-          job.progress(0.4, 'step 2...', done);
+          job.progress(4, 10, 'step 2...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
-          job.progress(0.6, 'step 3...', done);
+          job.progress(6, 10, 'step 3...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
-          job.progress(0.9, 'step 4...', done);
+          job.progress(9, 10, 'step 4...', done);
         }
       ], done);
     });
