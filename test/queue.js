@@ -35,24 +35,28 @@ describe('queue', function() {
           setTimeout(done, 200);
         },
         function (done) {
+          console.log('setp 1...');
           job.progress(2, 10, 'step 1...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
+          console.log('setp 2...');
           job.progress(4, 10, 'step 2...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
+          console.log('setp 3...');
           job.progress(6, 10, 'step 3...', done);
         },
         function (done) {
           setTimeout(done, 200);
         },
         function (done) {
+          console.log('setp 4...');
           job.progress(9, 10, 'step 4...', done);
         }
       ], done);
