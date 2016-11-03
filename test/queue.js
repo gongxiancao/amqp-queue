@@ -46,14 +46,14 @@ describe('queue', function() {
           job.progress(4, 10, 'step 2...', done);
         },
         function (done) {
-          setTimeout(done, 200);
+          setTimeout(done, 2000);
         },
         function (done) {
           console.log('setp 3...');
           job.progress(6, 10, 'step 3...', done);
         },
         function (done) {
-          setTimeout(done, 200);
+          setTimeout(done, 1000);
         },
         function (done) {
           console.log('setp 4...');
@@ -72,7 +72,6 @@ describe('queue', function() {
       should.exist(data.completedAt);
       should.exist(data.duration);
       should.equal(progressSpy.callCount, 4);
-      done();
     });
 
     job.save(function (err) {console.log(err);
@@ -91,5 +90,9 @@ describe('queue', function() {
         job.on('progress', progressSpy);
       });
     });
+
+    setTimeout(function () {
+      queue.shutdown(done);
+    }, 0);
   });
 });
