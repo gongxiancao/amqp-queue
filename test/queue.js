@@ -1,7 +1,8 @@
 'use strict';
 
 var Queue = require('../lib/queue'),
-  async = require('async'),
+  when = require('when'),
+  nodefn = require('when/node'),
   should = require('chai').should(),
   sinon = require('sinon');
 
@@ -30,36 +31,37 @@ describe('queue', function() {
       should.equal(job.state, 'active');
       console.log('in processing...');
       should.equal(job.data.dataField1, 1);
-      async.series([
-        function (done) {
+
+      nodefn.bindCallback(when.all([
+        nodefn.call(function (done) {
           setTimeout(done, 200);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           console.log('setp 1...');
           job.progress(2, 10, 'step 1...', done);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           setTimeout(done, 200);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           console.log('setp 2...');
           job.progress(4, 10, 'step 2...', done);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           setTimeout(done, 2000);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           console.log('setp 3...');
           job.progress(6, 10, 'step 3...', done);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           setTimeout(done, 1000);
-        },
-        function (done) {
+        }),
+        nodefn.call(function (done) {
           console.log('setp 4...');
           job.progress(9, 10, 'step 4...', done);
-        }
-      ], done);
+        })
+      ]), done);
     });
 
     var progressSpy = sinon.spy();
