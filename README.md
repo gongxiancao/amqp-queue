@@ -7,3 +7,4 @@
 6. If a job failed, it will be published to the error queue, and trigger the on "error" handler
 7. Error handler will update job status on redis
 8. Progress will be both saved to redis and published to progress queue, the on "progress" handler will be triggered then.
+9. Light weight mode can be specified for a job by provide {lightweight: true} as third parameter when creating a job. In this mode, the job does not report any status to redis or queue, which means it is  not monitorable. 
