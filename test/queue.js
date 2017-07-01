@@ -1,7 +1,7 @@
 'use strict';
 
 var Queue = require('../lib/queue'),
-  when = require('when'),
+  // when = require('when'),
   nodefn = require('when/node'),
   should = require('chai').should(),
   sinon = require('sinon');
@@ -34,7 +34,7 @@ describe('queue', function() {
 
       nodefn.bindCallback(
         nodefn.call(function (done) {
-          setTimeout(done, 200);
+          setTimeout(done, 1000);
         })
         .then(function () {
           return nodefn.call(function (done) {
@@ -80,7 +80,7 @@ describe('queue', function() {
     var progressSpy = sinon.spy();
     var completeSpy = sinon.spy();
 
-    this.timeout(7000);
+    this.timeout(700000);
     var job = queue.create('testJob', {dataField1: 1});
     job.on('complete', function (data) {
       should.exist(data.id);
@@ -155,7 +155,7 @@ describe('queue', function() {
         });
       });
     });
-    var a = 0;
+
     setTimeout(function () {
       queue.shutdown(function () {
         should.equal(progressSpy.callCount, 0);
