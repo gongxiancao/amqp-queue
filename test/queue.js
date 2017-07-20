@@ -163,4 +163,133 @@ describe('queue', function() {
       });
     }, 2000);
   });
+
+it('should failed job get reprocessed and report error once after retry limit', function (done) {
+    var queue = new Queue('test', {
+      amqp: {host: 'localhost'},
+      view: {
+        redis: {
+          host: 'localhost',
+          port: 6379,
+        },
+        mongo: {
+          hosts: [{ host: 'localhost', port: 27017}],
+          database: 'test'
+        }
+      }
+    });
+
+    var retry = 3;
+    var processSpy = sinon.spy();
+    queue.process('testJob', {retry: retry}, function (job, done) {
+      console.log('process job ' + job.id);
+      processSpy();
+
+      should.equal(job.state, 'active');
+
+      nodefn.bindCallback(nodefn.call(function (done) {
+          setTimeout(done, 200);
+      })
+      .then(function () {
+          return when.reject(new Error('failed'));
+      }), done);
+    });
+
+    var completeSpy = sinon.spy();
+    var errorSpy = sinon.spy();
+
+    this.timeout(30000);
+    var job = queue.create('testJob', {});
+
+    job.save(function (err) {
+      should.not.exist(err);
+      should.exist(job.id);
+      queue.get(job.id, function (err, _job) {
+        should.exist(_job);
+        _job.on('complete', function () {
+          console.log('on complete');
+          completeSpy();
+        });
+        _job.on('error', function () {
+          console.log('on error');
+          errorSpy();
+        });
+      });
+    });
+
+    setTimeout(function () {
+      queue.shutdown(function () {
+        should.equal(processSpy.callCount, retry + 1);
+        should.equal(completeSpy.callCount, 0);
+        should.equal(errorSpy.callCount, 1);
+        done();
+      });
+    }, 10000);
+  });
+
+  it('should failed job get reprocessed and report complete after success retry', function (done) {
+    var processedTimes = 0;
+    var queue = new Queue('test', {
+      amqp: {host: 'localhost'},
+      view: {
+        redis: {
+          host: 'localhost',
+          port: 6379,
+        },
+        mongo: {
+          hosts: [{ host: 'localhost', port: 27017}],
+          database: 'test'
+        }
+      }
+    });
+
+    var retry = 4;
+    var processSpy = sinon.spy();
+    queue.process('testJob', {retry: retry}, function (job, done) {
+      console.log('process job ' + job.id);
+      processSpy();
+
+      should.equal(job.state, 'active');
+
+      nodefn.bindCallback(nodefn.call(function (done) {
+          setTimeout(done, 200);
+      })
+      .then(function () {
+        if( ++ processedTimes < 3) {
+          return when.reject(new Error('failed'));
+        }
+      }), done);
+    });
+
+    var completeSpy = sinon.spy();
+    var errorSpy = sinon.spy();
+
+    this.timeout(30000);
+    var job = queue.create('testJob', {});
+
+    job.save(function (err) {
+      should.not.exist(err);
+      should.exist(job.id);
+      queue.get(job.id, function (err, _job) {
+        should.exist(_job);
+        _job.on('complete', function () {
+          console.log('on complete');
+          completeSpy();
+        });
+        _job.on('error', function () {
+          console.log('on error');
+          errorSpy();
+        });
+      });
+    });
+
+    setTimeout(function () {
+      queue.shutdown(function () {
+        should.equal(processSpy.callCount, 3);
+        should.equal(completeSpy.callCount, 1);
+        should.equal(errorSpy.callCount, 0);
+        done();
+      });
+    }, 10000);
+  });
 });
