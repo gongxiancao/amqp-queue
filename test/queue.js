@@ -1,17 +1,70 @@
 'use strict';
 
 var Queue = require('../lib/queue'),
-  // when = require('when'),
+  when = require('when'),
   nodefn = require('when/node'),
   should = require('chai').should(),
   sinon = require('sinon');
 
 /* globals
   describe: false,
-  it: false
+  it: false,
+  xit: false
   */
 
 describe('queue', function() {
+  it('should job get processed when register process after save job', function (done) {
+    var queue = new Queue('test', {
+      amqp: {host: 'localhost'},
+      view: {
+        redis: {
+          host: 'localhost',
+          port: 6379,
+        },
+        mongo: {
+          hosts: [{ host: 'localhost', port: 27017}],
+          database: 'test'
+        }
+      }
+    });
+
+    this.timeout(700000);
+
+
+    var completeSpy = sinon.spy();
+
+    var job = queue.create('testJob', {dataField1: 1});
+    job.on('complete', function (data) {
+      should.exist(data.id);
+      should.equal(data.state, 'complete');
+      should.exist(data.completedAt);
+      should.exist(data.duration);
+      completeSpy();
+    });
+
+    var processSpy = sinon.spy();
+    job.save(function (err) {
+      should.not.exist(err);
+      should.exist(job.id);
+  
+      queue.process('testJob', function (job, done) {
+        should.equal(job.state, 'active');
+        console.log('in processing...');
+        should.equal(job.data.dataField1, 1);
+        processSpy();
+        done();
+      });
+    });
+
+    setTimeout(function () {
+      queue.shutdown(function () {
+        should.equal(processSpy.callCount, 1);
+        should.equal(completeSpy.callCount, 1);
+        done();
+      });
+    }, 2000);
+  });
+
   it('should job get processed', function (done) {
     var queue = new Queue('test', {
       amqp: {host: 'localhost'},
@@ -164,7 +217,7 @@ describe('queue', function() {
     }, 2000);
   });
 
-it('should failed job get reprocessed and report error once after retry limit', function (done) {
+  it('should failed job get reprocessed and report error once after retry limit', function (done) {
     var queue = new Queue('test', {
       amqp: {host: 'localhost'},
       view: {
