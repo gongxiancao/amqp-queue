@@ -345,4 +345,89 @@ describe('queue', function() {
       });
     }, 10000);
   });
+
+
+  it('should two different jobs processed correctly', function (done) {
+    var processedTimes = 0;
+    var queue = new Queue('test', {
+      amqp: {host: 'localhost'},
+      view: {
+        redis: {
+          host: 'localhost',
+          port: 6379,
+        },
+        mongo: {
+          hosts: [{ host: 'localhost', port: 27017}],
+          database: 'test'
+        }
+      }
+    });
+
+    var retry = 4;
+    var process1Spy = sinon.spy();
+    var process2Spy = sinon.spy();
+    queue.process('testJob1', {retry: retry}, function (job, done) {
+      console.log('process job1 ' + job.id);
+      process1Spy();
+
+      should.equal(job.state, 'active');
+
+      nodefn.bindCallback(nodefn.call(function (done) {
+          setTimeout(done, 200);
+      }), done);
+    });
+
+    queue.process('testJob2', {retry: retry}, function (job, done) {
+      console.log('process job2 ' + job.id);
+      process2Spy();
+
+      should.equal(job.state, 'active');
+
+      nodefn.bindCallback(nodefn.call(function (done) {
+          setTimeout(done, 200);
+      }), done);
+    });
+
+
+
+    this.timeout(30000);
+    var job1 = queue.create('testJob1', {});
+    var complete1Spy = sinon.spy();
+    job1.save(function (err) {
+      should.not.exist(err);
+      should.exist(job1.id);
+      queue.get(job1.id, function (err, _job) {
+        should.exist(_job);
+        job1.on('complete', function () {
+          console.log('on job1 complete');
+          complete1Spy();
+        });
+      });
+    });
+
+    var job2 = queue.create('testJob2', {});
+    var complete2Spy = sinon.spy();
+    job2.save(function (err) {
+      should.not.exist(err);
+      should.exist(job2.id);
+      queue.get(job2.id, function (err, _job) {
+        should.exist(_job);
+        job2.on('complete', function () {
+          console.log('on job2 complete');
+          complete2Spy();
+        });
+      });
+    });
+
+
+    setTimeout(function () {
+      queue.shutdown(function () {
+        should.equal(process1Spy.callCount, 1);
+        should.equal(process2Spy.callCount, 1);
+        should.equal(complete1Spy.callCount, 1);
+        should.equal(complete2Spy.callCount, 1);
+        done();
+      });
+    }, 10000);
+  });
 });
